@@ -2,8 +2,8 @@ Sasol Rewards  Promotions Dashboard
 
 A single-file, self-contained HTML dashboard for tracking Sasol Rewards conditional pricing / EDLP promotions — brand filters, a live calendar heatmap, sortable data table, and click-through detail popups, all in Sasol navy/blue/gold branding.
 
-Live demo: add your GitHub Pages link here once published, e.g.
-https://<your-username>.github.io/<repo-name>/
+Live real: add your GitHub Pages link here once published
+https://sasolhub.github.io/sasol-pomo-dashboard/
 
 
 ✨ Features
