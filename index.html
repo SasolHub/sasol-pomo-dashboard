@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sasol Rewards | Promotions Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --navy:#061a3a;
+  --navy-2:#0b2c6b;
+  --blue:#0f5fd6;
+  --sky:#3fb0ff;
+  --gold:#f2b705;
+  --white:#ffffff;
+  --ice:#eef4ff;
+  --grey:#5c6b85;
+  --line:#d8e2f5;
+  --ok:#1aa876;
+  --warn:#e0a418;
+  --danger:#e0473c;
+  --radius:14px;
+  --shadow: 0 10px 30px rgba(6,26,58,0.12);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:'Segoe UI', Arial, Helvetica, sans-serif;
+  background:
+    radial-gradient(circle at 15% 0%, #12306e 0%, transparent 45%),
+    radial-gradient(circle at 100% 0%, #0a4fae 0%, transparent 40%),
+    var(--navy);
+  color:var(--navy);
+  min-height:100vh;
+  padding-bottom:60px;
+}
+
+/* ===== HEADER ===== */
+header.top{
+  background:linear-gradient(135deg,var(--navy) 0%,var(--navy-2) 55%,#123a8c 100%);
+  color:var(--white);
+  padding:22px 32px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:16px;
+  box-shadow:var(--shadow);
+  position:relative;
+  overflow:hidden;
+  border-bottom:4px solid var(--gold);
+}
+header.top::after{
+  content:"";
+  position:absolute; inset:0;
+  background:linear-gradient(90deg, transparent 60%, rgba(255,255,255,0.05) 100%);
+  pointer-events:none;
+}
+.brand-row{display:flex;align-items:center;gap:16px;}
+
+/* 3D logo badge */
+.logo3d{
+  width:58px;height:58px;border-radius:16px;
+  position:relative;
+  background:linear-gradient(145deg,#1c6df2,#083a99 60%,#04204f);
+  box-shadow:
+    0 10px 18px rgba(0,0,0,0.45),
+    inset 0 2px 3px rgba(255,255,255,0.55),
+    inset 0 -6px 10px rgba(0,0,0,0.45);
+  transform:perspective(300px) rotateX(8deg) rotateY(-8deg);
+  display:flex;align-items:center;justify-content:center;
+  flex:none;
+}
+.logo3d span{
+  font-family:Georgia,'Times New Roman',serif;
+  font-weight:900;
+  font-size:28px;
+  color:var(--gold);
+  text-shadow:0 2px 0 rgba(0,0,0,0.5), 0 0 8px rgba(242,183,5,0.5);
+  transform:translateZ(10px);
+}
+.brand-text .title{font-size:21px;font-weight:700;letter-spacing:.3px;}
+.brand-text .sub{font-size:12.5px;color:#b7c9ec;margin-top:2px;}
+
+.clock-box{
+  background:rgba(255,255,255,0.08);
+  border:1px solid rgba(255,255,255,0.18);
+  border-radius:12px;
+  padding:10px 18px;
+  text-align:right;
+  backdrop-filter:blur(4px);
+  min-width:210px;
+}
+.clock-time{font-size:22px;font-weight:700;letter-spacing:1px;font-variant-numeric:tabular-nums;}
+.clock-date{font-size:12px;color:#cfdcf7;margin-top:2px;}
+.clock-tz{font-size:10.5px;color:var(--gold);margin-top:2px;letter-spacing:.5px;}
+
+/* ===== LAYOUT ===== */
+.wrap{max-width:1360px;margin:0 auto;padding:26px 24px 0;}
+
+/* KPI cards */
+.kpis{
+  display:grid;
+  grid-template-columns:repeat(6,1fr);
+  gap:14px;
+  margin-bottom:22px;
+}
+.kpi{
+  background:var(--white);
+  border-radius:var(--radius);
+  padding:16px 16px 14px;
+  box-shadow:var(--shadow);
+  border-top:4px solid var(--blue);
+  position:relative;
+  overflow:hidden;
+}
+.kpi.gold{border-top-color:var(--gold);}
+.kpi.ok{border-top-color:var(--ok);}
+.kpi .num{font-size:30px;font-weight:800;color:var(--navy-2);font-variant-numeric:tabular-nums;}
+.kpi .lbl{font-size:11.5px;color:var(--grey);text-transform:uppercase;letter-spacing:.5px;margin-top:4px;font-weight:600;}
+.kpi .ico{position:absolute;right:12px;top:12px;font-size:20px;opacity:.35;}
+
+/* Panels */
+.panel{
+  background:var(--white);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  padding:20px;
+  margin-bottom:22px;
+}
+.panel h2{
+  margin:0 0 14px;
+  font-size:15px;
+  color:var(--navy-2);
+  display:flex;align-items:center;gap:8px;
+  text-transform:uppercase;letter-spacing:.5px;
+}
+.panel h2 .tag{
+  background:var(--ice);color:var(--blue);font-size:11px;font-weight:700;
+  padding:3px 9px;border-radius:20px;text-transform:none;letter-spacing:0;
+}
+
+/* Filters */
+.filters{
+  display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;
+}
+.f-group{display:flex;flex-direction:column;gap:5px;min-width:150px;}
+.f-group label{font-size:11px;font-weight:700;color:var(--grey);text-transform:uppercase;letter-spacing:.4px;}
+.f-group select, .f-group input{
+  padding:9px 10px;border-radius:8px;border:1.5px solid var(--line);
+  font-size:13.5px;color:var(--navy);background:var(--ice);
+  outline:none;
+}
+.f-group select:focus, .f-group input:focus{border-color:var(--blue);background:var(--white);}
+.f-group.search{min-width:220px;flex:1;}
+.btn{
+  padding:9px 16px;border-radius:8px;border:none;cursor:pointer;
+  font-weight:700;font-size:13px;letter-spacing:.3px;
+}
+.btn-reset{background:var(--ice);color:var(--blue);border:1.5px solid var(--line);}
+.btn-reset:hover{background:#e2ecff;}
+.btn-load{background:linear-gradient(135deg,var(--blue),var(--navy-2));color:#fff;box-shadow:0 4px 10px rgba(15,95,214,.35);}
+.btn-load:hover{filter:brightness(1.08);}
+#fileInput{display:none;}
+.load-status{font-size:11.5px;color:var(--ok);margin-left:4px;}
+
+/* two-column: calendar + status breakdown */
+.grid-2{display:grid;grid-template-columns:1.3fr 1fr;gap:22px;}
+@media (max-width:980px){.grid-2{grid-template-columns:1fr;}}
+
+/* Calendar */
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.cal-nav{display:flex;gap:6px;align-items:center;}
+.cal-nav button{
+  background:var(--ice);border:1px solid var(--line);color:var(--blue);
+  border-radius:6px;width:28px;height:28px;cursor:pointer;font-weight:700;
+}
+.cal-month-lbl{font-weight:700;color:var(--navy-2);font-size:14px;min-width:150px;text-align:center;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;}
+.cal-dow{font-size:10.5px;font-weight:700;color:var(--grey);text-align:center;padding-bottom:4px;text-transform:uppercase;}
+.cal-cell{
+  aspect-ratio:1/0.85;border-radius:8px;border:1px solid var(--line);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  font-size:11px;color:var(--grey);background:var(--ice);cursor:default;position:relative;
+  transition:transform .12s;
+}
+.cal-cell.empty{background:transparent;border:none;}
+.cal-cell .d{font-weight:700;font-size:11.5px;color:var(--navy-2);}
+.cal-cell .c{font-size:14px;font-weight:800;margin-top:1px;}
+.cal-cell.has:hover{transform:translateY(-2px);cursor:pointer;box-shadow:0 4px 10px rgba(15,95,214,.25);}
+.cal-cell.today{border:2px solid var(--gold);}
+.cal-cell.selected{outline:2px solid var(--blue);}
+.legend{display:flex;gap:12px;align-items:center;margin-top:10px;font-size:11px;color:var(--grey);flex-wrap:wrap;}
+.legend .sw{width:12px;height:12px;border-radius:3px;display:inline-block;margin-right:4px;vertical-align:middle;}
+
+/* status donut-ish bars */
+.status-row{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+.status-row .label{width:90px;font-size:12.5px;font-weight:700;color:var(--navy-2);}
+.status-row .bar{flex:1;height:14px;background:var(--ice);border-radius:7px;overflow:hidden;}
+.status-row .bar > div{height:100%;border-radius:7px;}
+.status-row .count{width:34px;text-align:right;font-weight:800;color:var(--navy-2);font-size:13px;}
+
+/* Table */
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead th{
+  background:var(--navy-2);color:#fff;text-align:left;padding:10px 12px;
+  position:sticky;top:0;cursor:pointer;user-select:none;white-space:nowrap;
+  font-size:11.5px;text-transform:uppercase;letter-spacing:.4px;
+}
+thead th:hover{background:var(--blue);}
+thead th::after{content:"⇅";opacity:.5;font-size:10px;margin-left:4px;}
+tbody td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:middle;white-space:nowrap;}
+tbody tr:hover{background:var(--ice);}
+.prod-img{width:34px;height:34px;border-radius:8px;object-fit:cover;border:1px solid var(--line);background:#f2f6ff;}
+.badge{padding:3px 9px;border-radius:20px;font-size:10.5px;font-weight:800;letter-spacing:.3px;}
+.badge.active{background:#e4f8f0;color:var(--ok);}
+.badge.upcoming{background:#fff4dd;color:var(--warn);}
+.badge.expired{background:#fdeceb;color:var(--danger);}
+.count-pill{
+  font-size:12px;color:var(--grey);margin-left:auto;font-weight:600;
+}
+.panel h2 .count-pill{margin-left:auto;}
+
+footer{
+  text-align:center;color:#b7c9ec;font-size:11.5px;padding:26px 10px 8px;
+}
+
+/* ===== Anime mascot ===== */
+#mascot{
+  position:fixed;bottom:18px;right:18px;width:92px;height:110px;z-index:999;
+  cursor:pointer;filter:drop-shadow(0 8px 14px rgba(0,0,0,.35));
+}
+#mascot .bob{animation:bob 2.6s ease-in-out infinite;transform-origin:center;}
+@keyframes bob{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+.eye{animation:blink 4.2s infinite;}
+@keyframes blink{0%,92%,100%{transform:scaleY(1);}94%{transform:scaleY(0.1);}96%{transform:scaleY(1);}}
+.wave{transform-origin:85% 65%;animation:wave 2.6s ease-in-out infinite;}
+@keyframes wave{0%,60%,100%{transform:rotate(0deg);}70%{transform:rotate(-18deg);}80%{transform:rotate(6deg);}90%{transform:rotate(-12deg);}}
+#mascotBubble{
+  position:fixed;bottom:118px;right:16px;background:var(--white);color:var(--navy-2);
+  padding:8px 12px;border-radius:12px;font-size:11.5px;font-weight:600;box-shadow:var(--shadow);
+  max-width:170px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;
+}
+#mascotBubble.show{opacity:1;}
+#mascotBubble::after{
+  content:"";position:absolute;bottom:-6px;right:26px;width:12px;height:12px;
+  background:var(--white);transform:rotate(45deg);
+}
+
+@media (max-width:1100px){.kpis{grid-template-columns:repeat(3,1fr);}}
+@media (max-width:640px){.kpis{grid-template-columns:repeat(2,1fr);}}
+
+/* ===== MODAL POPUP ===== */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(6,26,58,0.55);
+  display:none;align-items:center;justify-content:center;z-index:1200;
+  padding:20px;backdrop-filter:blur(2px);
+}
+.modal-overlay.show{display:flex;}
+.modal-card{
+  background:var(--white);border-radius:18px;max-width:440px;width:100%;
+  box-shadow:0 24px 60px rgba(6,26,58,0.45);overflow:hidden;
+  animation:modalIn .22s ease-out;
+}
+@keyframes modalIn{from{opacity:0;transform:translateY(14px) scale(.97);}to{opacity:1;transform:translateY(0) scale(1);}}
+.modal-img-wrap{
+  position:relative;background:linear-gradient(135deg,var(--navy-2),var(--blue));
+}
+.modal-img-wrap img{width:100%;display:block;max-height:200px;object-fit:cover;}
+.modal-close{
+  position:absolute;top:10px;right:10px;width:30px;height:30px;border-radius:50%;
+  background:rgba(6,26,58,0.55);color:#fff;border:none;cursor:pointer;font-size:16px;
+  display:flex;align-items:center;justify-content:center;
+}
+.modal-close:hover{background:rgba(6,26,58,0.8);}
+.modal-body{padding:20px 22px 22px;}
+.modal-body .m-brand{font-size:11.5px;font-weight:800;letter-spacing:.5px;color:var(--blue);text-transform:uppercase;}
+.modal-body .m-product{font-size:19px;font-weight:800;color:var(--navy-2);margin:3px 0 14px;}
+.modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 16px;margin-bottom:14px;}
+.modal-grid .mi{background:var(--ice);border-radius:10px;padding:8px 10px;}
+.modal-grid .mi .k{font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--grey);font-weight:700;}
+.modal-grid .mi .v{font-size:14px;font-weight:800;color:var(--navy-2);margin-top:2px;}
+.modal-status-line{display:flex;align-items:center;gap:8px;margin-top:2px;}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand-row">
+    <div class="logo3d"><span>S</span></div>
+    <div class="brand-text">
+      <div class="title">Sasol Rewards &mdash; Promotions Dashboard</div>
+      <div class="sub">Conditional Pricing &amp; EDLP Promotions Tracker</div>
+    </div>
+  </div>
+  <div class="clock-box">
+    <div class="clock-time" id="clockTime">--:--:--</div>
+    <div class="clock-date" id="clockDate">Loading date…</div>
+    <div class="clock-tz">SAST · JOHANNESBURG, SOUTH AFRICA</div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- KPI COUNTS -->
+  <div class="kpis" id="kpiRow"></div>
+
+  <!-- FILTERS + LOAD -->
+  <div class="panel">
+    <h2>Filters <span class="tag" id="filterTag">live</span></h2>
+    <div class="filters">
+      <div class="f-group">
+        <label>Brand</label>
+        <select id="fBrand"><option value="">All Brands</option></select>
+      </div>
+      <div class="f-group">
+        <label>Year</label>
+        <select id="fYear"><option value="">All Years</option></select>
+      </div>
+      <div class="f-group">
+        <label>Period</label>
+        <select id="fPeriod"><option value="">All Periods</option></select>
+      </div>
+      <div class="f-group">
+        <label>Status</label>
+        <select id="fStatus">
+          <option value="">All Statuses</option>
+          <option value="active">Active</option>
+          <option value="upcoming">Upcoming</option>
+          <option value="expired">Expired</option>
+        </select>
+      </div>
+      <div class="f-group search">
+        <label>Search Product</label>
+        <input type="text" id="fSearch" placeholder="e.g. Monster, Red Bull, Clover…">
+      </div>
+      <button class="btn btn-reset" id="btnReset">Reset Filters</button>
+      <button class="btn btn-load" id="btnLoad">📂 Load Excel File</button>
+      <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
+      <span class="load-status" id="loadStatus"></span>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <!-- CALENDAR -->
+    <div class="panel">
+      <h2>Promotion Calendar <span class="tag" id="calTag">count by day</span></h2>
+      <div class="cal-head">
+        <div class="cal-month-lbl" id="calMonthLbl">—</div>
+        <div class="cal-nav">
+          <button id="calPrev">‹</button>
+          <button id="calToday">•</button>
+          <button id="calNext">›</button>
+        </div>
+      </div>
+      <div class="cal-grid" id="calDow"></div>
+      <div class="cal-grid" id="calGrid" style="margin-top:5px;"></div>
+      <div class="legend">
+        <span><span class="sw" style="background:#eef4ff;"></span>0</span>
+        <span><span class="sw" style="background:#bcd6ff;"></span>low</span>
+        <span><span class="sw" style="background:#5f9dfa;"></span>med</span>
+        <span><span class="sw" style="background:#0f5fd6;"></span>high</span>
+        <span style="margin-left:auto;">Click a day to filter the table below</span>
+      </div>
+    </div>
+
+    <!-- STATUS BREAKDOWN -->
+    <div class="panel">
+      <h2>Status Breakdown <span class="tag" id="statTag">of filtered set</span></h2>
+      <div id="statusBody"></div>
+      <h2 style="margin-top:20px;">Top Brands <span class="tag" id="brandTag">by promo count</span></h2>
+      <div id="brandBody"></div>
+    </div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="panel">
+    <h2>Promotions <span class="count-pill" id="tableCount">0 records</span></h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th data-k="img">Image</th>
+            <th data-k="ConditionalPricingId">ID</th>
+            <th data-k="Brand">Brand</th>
+            <th data-k="Product">Product</th>
+            <th data-k="Qty">Qty</th>
+            <th data-k="Price (R)">Price (R)</th>
+            <th data-k="Period">Period</th>
+            <th data-k="Year">Year</th>
+            <th data-k="Start Date">Start</th>
+            <th data-k="End Date">End</th>
+            <th data-k="status">Status</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <footer>Sasol Rewards Internal Dashboard · Data source: Promotions workbook · Built for customer service analytics</footer>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-card" role="dialog" aria-modal="true">
+    <div class="modal-img-wrap">
+      <img id="mImg" src="" alt="">
+      <button class="modal-close" id="modalClose" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="m-brand" id="mBrand"></div>
+      <div class="m-product" id="mProduct"></div>
+      <div class="modal-grid">
+        <div class="mi"><div class="k">Promo ID</div><div class="v" id="mId"></div></div>
+        <div class="mi"><div class="k">Price</div><div class="v" id="mPrice"></div></div>
+        <div class="mi"><div class="k">Qty</div><div class="v" id="mQty"></div></div>
+        <div class="mi"><div class="k">Period</div><div class="v" id="mPeriod"></div></div>
+        <div class="mi"><div class="k">Year</div><div class="v" id="mYear"></div></div>
+        <div class="mi"><div class="k">Comment</div><div class="v" id="mComment"></div></div>
+        <div class="mi"><div class="k">Start Date</div><div class="v" id="mStart"></div></div>
+        <div class="mi"><div class="k">End Date</div><div class="v" id="mEnd"></div></div>
+      </div>
+      <div class="modal-status-line">
+        <span id="mStatus" class="badge"></span>
+        <span id="mDays" style="font-size:12px;color:var(--grey);"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="mascotBubble"></div>
+<svg id="mascot" viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
+  <g class="bob">
+    <ellipse cx="50" cy="108" rx="26" ry="6" fill="rgba(0,0,0,0.15)"/>
+    <!-- body -->
+    <path d="M50 40 C72 40 80 58 78 80 C76 100 62 108 50 108 C38 108 24 100 22 80 C20 58 28 40 50 40 Z" fill="#0f5fd6"/>
+    <path d="M50 40 C72 40 80 58 78 80 C76 100 62 108 50 108 C46 108 42 107 39 105 C55 103 66 92 68 76 C70 60 63 46 50 40 Z" fill="#0b2c6b" opacity="0.35"/>
+    <!-- collar / gold trim -->
+    <path d="M31 62 C40 68 60 68 69 62" stroke="#f2b705" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <!-- head -->
+    <circle cx="50" cy="34" r="22" fill="#eef4ff"/>
+    <circle cx="50" cy="34" r="22" fill="none" stroke="#0b2c6b" stroke-width="1.5" opacity="0.15"/>
+    <!-- ears/antennae -->
+    <circle cx="34" cy="16" r="4" fill="#f2b705"/>
+    <circle cx="66" cy="16" r="4" fill="#f2b705"/>
+    <line x1="34" y1="20" x2="40" y2="26" stroke="#f2b705" stroke-width="2"/>
+    <line x1="66" y1="20" x2="60" y2="26" stroke="#f2b705" stroke-width="2"/>
+    <!-- eyes -->
+    <g class="eye">
+      <ellipse cx="42" cy="34" rx="3.6" ry="5" fill="#0b2c6b"/>
+      <ellipse cx="58" cy="34" rx="3.6" ry="5" fill="#0b2c6b"/>
+      <circle cx="43.2" cy="32" r="1.1" fill="#fff"/>
+      <circle cx="59.2" cy="32" r="1.1" fill="#fff"/>
+    </g>
+    <!-- blush -->
+    <ellipse cx="36" cy="40" rx="3.5" ry="2" fill="#ffb3a7" opacity="0.6"/>
+    <ellipse cx="64" cy="40" rx="3.5" ry="2" fill="#ffb3a7" opacity="0.6"/>
+    <!-- smile -->
+    <path d="M43 42 Q50 47 57 42" stroke="#0b2c6b" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <!-- waving arm -->
+    <g class="wave">
+      <path d="M76 66 C86 62 92 52 90 44" stroke="#0f5fd6" stroke-width="8" fill="none" stroke-linecap="round"/>
+      <circle cx="90" cy="43" r="6" fill="#eef4ff" stroke="#0b2c6b" stroke-width="1" opacity="0.9"/>
+    </g>
+    <!-- other arm -->
+    <path d="M24 66 C16 70 13 78 16 86" stroke="#0f5fd6" stroke-width="8" fill="none" stroke-linecap="round"/>
+  </g>
+</svg>
+
+<script>
+/* ============ DATA ============ */
+let RAW = [{"ConditionalPricingId": "21565", "Period": 1, "Year": 2026, "Brand": "CCBSA", "Product": "Monster 500ml", "Qty": 1, "Price (R)": 23, "Start Date": "2026-01-22", "End Date": "2026-03-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21576", "Period": 1, "Year": 2026, "Brand": "CCBSA", "Product": "Monster 553ml", "Qty": 1, "Price (R)": 28, "Start Date": "2026-01-22", "End Date": "2026-03-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21588", "Period": 1, "Year": 2026, "Brand": "Clover", "Product": "Clover Fresh Cream/ Long Life Milk 2L", "Qty": 1, "Price (R)": 39.9, "Start Date": "2026-01-22", "End Date": "2026-03-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21589", "Period": 1, "Year": 2026, "Brand": "Dairymaid", "Product": "King Cone Classic Vanilla 125ml", "Qty": 1, "Price (R)": 25.9, "Start Date": "2026-01-22", "End Date": "2026-03-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21590", "Period": 1, "Year": 2026, "Brand": "Sasol Delight", "Product": "Sasol Delight Charcoal 5kg", "Qty": 1, "Price (R)": 98.9, "Start Date": "2026-01-22", "End Date": "2026-03-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21591", "Period": 1, "Year": 2026, "Brand": "Redbull", "Product": "Red Bull 250ml", "Qty": 1, "Price (R)": 22.9, "Start Date": "2026-01-01", "End Date": "2026-03-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21592", "Period": 1, "Year": 2026, "Brand": "Redbull", "Product": "Red Bull 355ml", "Qty": 1, "Price (R)": 29.9, "Start Date": "2026-01-01", "End Date": "2026-03-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21593", "Period": 1, "Year": 2026, "Brand": "Redbull", "Product": "Redbull 473ml", "Qty": 1, "Price (R)": 37.9, "Start Date": "2026-01-01", "End Date": "2026-03-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21594", "Period": 1, "Year": 2026, "Brand": "Nestle", "Product": "Nestle Giant 48g \u2013 84g", "Qty": 1, "Price (R)": 21.9, "Start Date": "2025-12-01", "End Date": "2026-02-28", "Comment": "EDLP"}, {"ConditionalPricingId": "21595", "Period": 1, "Year": 2026, "Brand": "Rhodes", "Product": "Rhodes Juice 1L", "Qty": 1, "Price (R)": 36.9, "Start Date": "2025-10-18", "End Date": "2026-01-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21596", "Period": 1, "Year": 2025, "Brand": "CCBSA", "Product": "Monster 500ml", "Qty": 1, "Price (R)": 22, "Start Date": "2025-01-16", "End Date": "2025-02-26", "Comment": "EDLP"}, {"ConditionalPricingId": "21597", "Period": 1, "Year": 2025, "Brand": "CCBSA", "Product": "Monster 553ml", "Qty": 1, "Price (R)": 25, "Start Date": "2025-01-16", "End Date": "2025-02-26", "Comment": "EDLP"}, {"ConditionalPricingId": "21551", "Period": 1, "Year": 2025, "Brand": "CCBSA", "Product": "Power Play 250ml", "Qty": 1, "Price (R)": 16, "Start Date": "2025-01-16", "End Date": "2025-02-26", "Comment": "EDLP"}, {"ConditionalPricingId": "21552", "Period": 1, "Year": 2025, "Brand": "Kellanova", "Product": "Kellogg's Coco Pops/ Rice Krispies Bars 22g", "Qty": 2, "Price (R)": 23.9, "Start Date": "2025-01-16", "End Date": "2025-03-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21553", "Period": 1, "Year": 2025, "Brand": "Tiger Brands", "Product": "Black Cat Peanut Butter Smooth 400g", "Qty": 1, "Price (R)": 48.9, "Start Date": "2025-01-16", "End Date": "2025-03-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21554", "Period": 1, "Year": 2025, "Brand": "Tiger Brands", "Product": "KOO Baked Beans 400g", "Qty": 1, "Price (R)": 19.9, "Start Date": "2025-01-16", "End Date": "2025-03-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21555", "Period": 1, "Year": 2025, "Brand": "Tiger Brands", "Product": "Mrs. Balls Chutney Original 470g", "Qty": 1, "Price (R)": 42.9, "Start Date": "2025-01-16", "End Date": "2025-03-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21556", "Period": 1, "Year": 2025, "Brand": "Redbull", "Product": "Red Bull 250ml", "Qty": 1, "Price (R)": 21.9, "Start Date": "2025-01-01", "End Date": "2025-03-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21557", "Period": 1, "Year": 2025, "Brand": "Redbull", "Product": "Red Bull 355ml", "Qty": 1, "Price (R)": 28.9, "Start Date": "2025-01-01", "End Date": "2025-03-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21558", "Period": 1, "Year": 2025, "Brand": "Redbull", "Product": "Redbull 473ml", "Qty": 1, "Price (R)": 34.9, "Start Date": "2025-01-01", "End Date": "2025-03-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21559", "Period": 1, "Year": 2025, "Brand": "Sasol Delight", "Product": "Sasol Delight Flavoured Sparkling Water 500ml", "Qty": 1, "Price (R)": 11.9, "Start Date": "2025-01-01", "End Date": "2025-03-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21560", "Period": 1, "Year": 2025, "Brand": "Sasol Delight", "Product": "Sasol Delight Still Water 5L", "Qty": 1, "Price (R)": 26.9, "Start Date": "2025-01-01", "End Date": "2025-03-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21561", "Period": 1, "Year": 2025, "Brand": "Sasol Delight", "Product": "Sasol Delight Still/ Sparkling Water 500ml", "Qty": 1, "Price (R)": 9.9, "Start Date": "2025-01-01", "End Date": "2025-03-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21562", "Period": 1, "Year": 2025, "Brand": "Finns", "Product": "Finns Sunglasses", "Qty": 1, "Price (R)": 158.9, "Start Date": "2024-12-01", "End Date": "2025-02-28", "Comment": "EDLP"}, {"ConditionalPricingId": "21563", "Period": 1, "Year": 2025, "Brand": "Ola", "Product": "Magnum 90ml \u2013 100ml", "Qty": 2, "Price (R)": 67.9, "Start Date": "2024-12-01", "End Date": "2025-02-28", "Comment": "EDLP"}, {"ConditionalPricingId": "21564", "Period": 2, "Year": 2026, "Brand": "Dairymaid", "Product": "Oreo Sandwich 110ml", "Qty": 1, "Price (R)": 39.9, "Start Date": "2026-04-01", "End Date": "2026-06-30", "Comment": "EDLP"}, {"ConditionalPricingId": "21566", "Period": 2, "Year": 2026, "Brand": "CCBSA", "Product": "Monster 553ml", "Qty": 1, "Price (R)": 28, "Start Date": "2026-03-12", "End Date": "2026-05-06", "Comment": "EDLP"}, {"ConditionalPricingId": "21567", "Period": 2, "Year": 2026, "Brand": "Redbull", "Product": "Red Bull 250ml", "Qty": 1, "Price (R)": 22.9, "Start Date": "2026-03-01", "End Date": "2026-06-30", "Comment": "EDLP"}, {"ConditionalPricingId": "21568", "Period": 2, "Year": 2026, "Brand": "Redbull", "Product": "Red Bull 355ml", "Qty": 1, "Price (R)": 29.9, "Start Date": "2026-03-01", "End Date": "2026-06-30", "Comment": "EDLP"}, {"ConditionalPricingId": "21569", "Period": 2, "Year": 2026, "Brand": "Redbull", "Product": "Redbull 473ml", "Qty": 1, "Price (R)": 37.9, "Start Date": "2026-03-01", "End Date": "2026-06-30", "Comment": "EDLP"}, {"ConditionalPricingId": "21570", "Period": 2, "Year": 2026, "Brand": "Clover", "Product": "Clover Fresh Cream/ Long Life Milk 2L", "Qty": 1, "Price (R)": 39.9, "Start Date": "2026-01-22", "End Date": "2026-03-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21571", "Period": 2, "Year": 2026, "Brand": "Dairymaid", "Product": "King Cone Classic Vanilla 125ml", "Qty": 1, "Price (R)": 25.9, "Start Date": "2026-01-22", "End Date": "2026-03-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21572", "Period": 2, "Year": 2026, "Brand": "Sasol Delight", "Product": "Sasol Delight Charcoal 5kg", "Qty": 1, "Price (R)": 98.9, "Start Date": "2026-01-22", "End Date": "2026-03-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21573", "Period": 2, "Year": 2025, "Brand": "Dairymaid", "Product": "Cadbury 5 Star 80ml", "Qty": 1, "Price (R)": 27.9, "Start Date": "2025-04-01", "End Date": "2025-06-30", "Comment": "EDLP"}, {"ConditionalPricingId": "21574", "Period": 2, "Year": 2025, "Brand": "Piemans", "Product": "Classic Pie", "Qty": 1, "Price (R)": 27.9, "Start Date": "2025-04-01", "End Date": "2025-06-30", "Comment": "EDLP"}, {"ConditionalPricingId": "21575", "Period": 2, "Year": 2025, "Brand": "CCBSA", "Product": "Monster 500ml", "Qty": 1, "Price (R)": 22, "Start Date": "2025-02-27", "End Date": "2025-04-09", "Comment": "EDLP"}, {"ConditionalPricingId": "21577", "Period": 2, "Year": 2025, "Brand": "CCBSA", "Product": "Monster 553ml", "Qty": 1, "Price (R)": 25, "Start Date": "2025-02-27", "End Date": "2025-04-09", "Comment": "EDLP"}, {"ConditionalPricingId": "21578", "Period": 2, "Year": 2025, "Brand": "CCBSA", "Product": "Power Play 250ml", "Qty": 1, "Price (R)": 16, "Start Date": "2025-02-27", "End Date": "2025-04-09", "Comment": "EDLP"}, {"ConditionalPricingId": "21580", "Period": 2, "Year": 2025, "Brand": "CCBSA", "Product": "Power Play 440ml \u2013 500ml", "Qty": 1, "Price (R)": 18, "Start Date": "2025-02-27", "End Date": "2025-04-09", "Comment": "EDLP"}, {"ConditionalPricingId": "21581", "Period": 2, "Year": 2025, "Brand": "Kellanova", "Product": "Kellogg's Coco Pops/ Rice Krispies Bars 22g", "Qty": 2, "Price (R)": 23.9, "Start Date": "2025-01-16", "End Date": "2025-03-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21582", "Period": 2, "Year": 2025, "Brand": "Tiger Brands", "Product": "Black Cat Peanut Butter Smooth 400g", "Qty": 1, "Price (R)": 48.9, "Start Date": "2025-01-16", "End Date": "2025-03-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21583", "Period": 2, "Year": 2025, "Brand": "Tiger Brands", "Product": "KOO Baked Beans 400g", "Qty": 1, "Price (R)": 19.9, "Start Date": "2025-01-16", "End Date": "2025-03-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21584", "Period": 2, "Year": 2025, "Brand": "Tiger Brands", "Product": "Mrs. Balls Chutney Original 470g", "Qty": 1, "Price (R)": 42.9, "Start Date": "2025-01-16", "End Date": "2025-03-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21585", "Period": 2, "Year": 2025, "Brand": "Redbull", "Product": "Red Bull 250ml", "Qty": 1, "Price (R)": 21.9, "Start Date": "2025-01-01", "End Date": "2025-06-30", "Comment": "EDLP"}, {"ConditionalPricingId": "21586", "Period": 2, "Year": 2025, "Brand": "Redbull", "Product": "Red Bull 355ml", "Qty": 1, "Price (R)": 28.9, "Start Date": "2025-01-01", "End Date": "2025-06-30", "Comment": "EDLP"}, {"ConditionalPricingId": "21587", "Period": 2, "Year": 2025, "Brand": "Redbull", "Product": "Redbull 473ml", "Qty": 1, "Price (R)": 34.9, "Start Date": "2025-01-01", "End Date": "2025-06-30", "Comment": "EDLP"}, {"ConditionalPricingId": "21598", "Period": 2, "Year": 2025, "Brand": "Sasol Delight", "Product": "Sasol Delight Still Water 5L", "Qty": 1, "Price (R)": 26.9, "Start Date": "2025-01-01", "End Date": "2025-04-09", "Comment": "EDLP"}, {"ConditionalPricingId": "21547", "Period": 2, "Year": 2025, "Brand": "Finns", "Product": "Finns Sunglasses", "Qty": 1, "Price (R)": 158.9, "Start Date": "2024-12-01", "End Date": "2025-02-28", "Comment": "EDLP"}, {"ConditionalPricingId": "21548", "Period": 2, "Year": 2025, "Brand": "Ola", "Product": "Magnum 90ml \u2013 100ml", "Qty": 2, "Price (R)": 67.9, "Start Date": "2024-12-01", "End Date": "2025-02-28", "Comment": "EDLP"}, {"ConditionalPricingId": "21549", "Period": 3, "Year": 2026, "Brand": "CCBSA", "Product": "Monster 500ml", "Qty": 1, "Price (R)": 23, "Start Date": "2026-05-07", "End Date": "2026-06-17", "Comment": "EDLP"}, {"ConditionalPricingId": "21550", "Period": 3, "Year": 2026, "Brand": "CCBSA", "Product": "Monster 553ml", "Qty": 1, "Price (R)": 28, "Start Date": "2026-05-07", "End Date": "2026-06-17", "Comment": "EDLP"}, {"ConditionalPricingId": "21541", "Period": 3, "Year": 2026, "Brand": "Clover", "Product": "Clover Fresh Cream/ Long Life Milk 2L", "Qty": 1, "Price (R)": 39.9, "Start Date": "2026-05-07", "End Date": "2026-07-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21546", "Period": 3, "Year": 2026, "Brand": "Nestle", "Product": "Nestle Aero/ KIT KAT Slabs 85g", "Qty": 1, "Price (R)": 27.9, "Start Date": "2026-05-07", "End Date": "2026-07-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21510", "Period": 3, "Year": 2026, "Brand": "Rhodes Groceries", "Product": "Rhodes Baked Beans 400g", "Qty": 1, "Price (R)": 18.9, "Start Date": "2026-05-07", "End Date": "2026-07-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21522", "Period": 3, "Year": 2026, "Brand": "Rhodes Groceries", "Product": "Rhodes Chakalaka Mild & Spicy 400g", "Qty": 1, "Price (R)": 29.9, "Start Date": "2026-05-07", "End Date": "2026-07-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21530", "Period": 3, "Year": 2026, "Brand": "Rhodes Groceries", "Product": "Rhodes Cream Style weetcorn 410g", "Qty": 1, "Price (R)": 25.9, "Start Date": "2026-05-07", "End Date": "2026-07-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21537", "Period": 3, "Year": 2026, "Brand": "Rhodes Groceries", "Product": "Rhodes Tomato & Onion Mix 410g", "Qty": 1, "Price (R)": 26.9, "Start Date": "2026-05-07", "End Date": "2026-07-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21511", "Period": 3, "Year": 2026, "Brand": "Sasol Delight", "Product": "Sasol Delight Still Water 5L", "Qty": 1, "Price (R)": 28.9, "Start Date": "2026-05-07", "End Date": "2026-07-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21512", "Period": 3, "Year": 2026, "Brand": "Tiger Brands", "Product": "Beacon/ Jelly Tots/ TV Bar/ Niki Slab 80g", "Qty": 1, "Price (R)": 19.9, "Start Date": "2026-05-07", "End Date": "2026-07-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21513", "Period": 3, "Year": 2026, "Brand": "Dairymaid", "Product": "Oreo Sandwich 110ml", "Qty": 1, "Price (R)": 39.9, "Start Date": "2026-04-01", "End Date": "2026-06-30", "Comment": "EDLP"}, {"ConditionalPricingId": "21514", "Period": 3, "Year": 2026, "Brand": "Redbull", "Product": "Red Bull 250ml", "Qty": 1, "Price (R)": 22.9, "Start Date": "2026-03-01", "End Date": "2026-06-30", "Comment": "EDLP"}, {"ConditionalPricingId": "21515", "Period": 3, "Year": 2026, "Brand": "Redbull", "Product": "Red Bull 355ml", "Qty": 1, "Price (R)": 29.9, "Start Date": "2026-03-01", "End Date": "2026-06-30", "Comment": "EDLP"}, {"ConditionalPricingId": "21516", "Period": 3, "Year": 2026, "Brand": "Redbull", "Product": "Redbull 473ml", "Qty": 1, "Price (R)": 37.9, "Start Date": "2026-03-01", "End Date": "2026-06-30", "Comment": "EDLP"}, {"ConditionalPricingId": "21517", "Period": 3, "Year": 2025, "Brand": "CCBSA", "Product": "Monster 553ml", "Qty": 1, "Price (R)": 25, "Start Date": "2025-04-10", "End Date": "2025-05-28", "Comment": "EDLP"}, {"ConditionalPricingId": "21518", "Period": 3, "Year": 2025, "Brand": "CCBSA", "Product": "Power Play 250ml", "Qty": 1, "Price (R)": 16, "Start Date": "2025-04-10", "End Date": "2025-05-28", "Comment": "EDLP"}, {"ConditionalPricingId": "21519", "Period": 3, "Year": 2025, "Brand": "CCBSA", "Product": "Power Play 440ml \u2013 500ml", "Qty": 1, "Price (R)": 18, "Start Date": "2025-04-10", "End Date": "2025-05-28", "Comment": "EDLP"}, {"ConditionalPricingId": "21520", "Period": 3, "Year": 2025, "Brand": "Sasol Delight", "Product": "Sasol Delight Still Water 5L", "Qty": 1, "Price (R)": 26.9, "Start Date": "2025-04-10", "End Date": "2025-05-28", "Comment": "EDLP"}, {"ConditionalPricingId": "21521", "Period": 3, "Year": 2025, "Brand": "Dairymaid", "Product": "Cadbury 5 Star 80ml", "Qty": 1, "Price (R)": 27.9, "Start Date": "2025-04-01", "End Date": "2025-06-30", "Comment": "EDLP"}, {"ConditionalPricingId": "21523", "Period": 3, "Year": 2025, "Brand": "Piemans", "Product": "Classic Pie", "Qty": 1, "Price (R)": 27.9, "Start Date": "2025-04-01", "End Date": "2025-06-30", "Comment": "EDLP"}, {"ConditionalPricingId": "21524", "Period": 3, "Year": 2025, "Brand": "Redbull", "Product": "Red Bull 250ml", "Qty": 1, "Price (R)": 21.9, "Start Date": "2025-01-01", "End Date": "2025-05-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21525", "Period": 3, "Year": 2025, "Brand": "Redbull", "Product": "Red Bull 355ml", "Qty": 1, "Price (R)": 28.9, "Start Date": "2025-01-01", "End Date": "2025-05-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21526", "Period": 3, "Year": 2025, "Brand": "Redbull", "Product": "Redbull 473ml", "Qty": 1, "Price (R)": 34.9, "Start Date": "2025-01-01", "End Date": "2025-05-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21527", "Period": 4, "Year": 2025, "Brand": "Dairymaid", "Product": "King Cone Classic Vanilla 125ml", "Qty": 1, "Price (R)": 25, "Start Date": "2025-07-01", "End Date": "2025-09-30", "Comment": "EDLP"}, {"ConditionalPricingId": "21528", "Period": 4, "Year": 2025, "Brand": "Clover", "Product": "Clover Full Cream Fresh Milk 2L", "Qty": 1, "Price (R)": 39.9, "Start Date": "2025-06-01", "End Date": "2025-08-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21529", "Period": 4, "Year": 2025, "Brand": "Kellanova", "Product": "Kellogg\u2019s Granola Bars 36g", "Qty": 2, "Price (R)": 29.9, "Start Date": "2025-06-01", "End Date": "2025-08-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21531", "Period": 4, "Year": 2025, "Brand": "Kellanova", "Product": "Kellogg\u2019s Rice Krispies/ Coco Pops Bars 22g", "Qty": 2, "Price (R)": 23.9, "Start Date": "2025-06-01", "End Date": "2025-08-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21532", "Period": 4, "Year": 2025, "Brand": "Redbull", "Product": "Red Bull 250ml", "Qty": 1, "Price (R)": 22.9, "Start Date": "2025-06-01", "End Date": "2025-08-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21533", "Period": 4, "Year": 2025, "Brand": "Redbull", "Product": "Red Bull 355ml", "Qty": 1, "Price (R)": 29.9, "Start Date": "2025-06-01", "End Date": "2025-08-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21534", "Period": 4, "Year": 2025, "Brand": "Redbull", "Product": "Redbull 473ml", "Qty": 1, "Price (R)": 37.9, "Start Date": "2025-06-01", "End Date": "2025-08-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21535", "Period": 4, "Year": 2025, "Brand": "CCBSA", "Product": "Monster 500ml", "Qty": 1, "Price (R)": 22, "Start Date": "2025-05-29", "End Date": "2025-07-16", "Comment": "EDLP"}, {"ConditionalPricingId": "21536", "Period": 4, "Year": 2025, "Brand": "CCBSA", "Product": "Monster 553ml", "Qty": 1, "Price (R)": 25, "Start Date": "2025-05-29", "End Date": "2025-07-16", "Comment": "EDLP"}, {"ConditionalPricingId": "21538", "Period": 4, "Year": 2025, "Brand": "Dairymaid", "Product": "Cadbury 5 Star 80ml", "Qty": 1, "Price (R)": 27.9, "Start Date": "2025-04-01", "End Date": "2025-06-30", "Comment": "EDLP"}, {"ConditionalPricingId": "21539", "Period": 4, "Year": 2025, "Brand": "Piemans", "Product": "Classic Pie", "Qty": 1, "Price (R)": 27.9, "Start Date": "2025-04-01", "End Date": "2025-06-30", "Comment": "EDLP"}, {"ConditionalPricingId": "21540", "Period": 5, "Year": 2025, "Brand": "CCBSA", "Product": "Coca-Cola Original 1.5L", "Qty": 1, "Price (R)": 25, "Start Date": "2025-07-17", "End Date": "2025-08-27", "Comment": "EDLP"}, {"ConditionalPricingId": "21542", "Period": 5, "Year": 2025, "Brand": "CCBSA", "Product": "Monster 500ml", "Qty": 1, "Price (R)": 22, "Start Date": "2025-07-17", "End Date": "2025-08-27", "Comment": "EDLP"}, {"ConditionalPricingId": "21545", "Period": 5, "Year": 2025, "Brand": "CCBSA", "Product": "Monster 553ml", "Qty": 1, "Price (R)": 25, "Start Date": "2025-07-17", "End Date": "2025-08-27", "Comment": "EDLP"}, {"ConditionalPricingId": "21494", "Period": 5, "Year": 2025, "Brand": "Ola", "Product": "Magnum 90ml \u2013 100ml", "Qty": 1, "Price (R)": 33, "Start Date": "2025-07-17", "End Date": "2025-09-30", "Comment": "EDLP"}, {"ConditionalPricingId": "21495", "Period": 5, "Year": 2025, "Brand": "RDS", "Product": "Kitten Soft Toilet Paper 2ply 4s", "Qty": 1, "Price (R)": 33.9, "Start Date": "2025-07-17", "End Date": "2025-09-30", "Comment": "EDLP"}, {"ConditionalPricingId": "21496", "Period": 5, "Year": 2025, "Brand": "RDS", "Product": "Pillow Soft Facial Tissues 2ply", "Qty": 1, "Price (R)": 16.9, "Start Date": "2025-07-17", "End Date": "2025-09-30", "Comment": "EDLP"}, {"ConditionalPricingId": "21498", "Period": 5, "Year": 2025, "Brand": "Dairymaid", "Product": "King Cone Classic Vanilla 125ml", "Qty": 1, "Price (R)": 25, "Start Date": "2025-07-01", "End Date": "2025-09-30", "Comment": "EDLP"}, {"ConditionalPricingId": "21505", "Period": 5, "Year": 2025, "Brand": "Clover", "Product": "Clover Fresh Cream/ Long Life Milk 2L", "Qty": 1, "Price (R)": 39.9, "Start Date": "2025-06-01", "End Date": "2025-08-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21506", "Period": 5, "Year": 2025, "Brand": "Kellanova", "Product": "Kellogg\u2019s Granola Bars 36g", "Qty": 2, "Price (R)": 29.9, "Start Date": "2025-06-01", "End Date": "2025-08-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21543", "Period": 5, "Year": 2025, "Brand": "Kellanova", "Product": "Kellogg\u2019s Rice Krispies/ Coco Pops Bars 22g", "Qty": 2, "Price (R)": 23.9, "Start Date": "2025-06-01", "End Date": "2025-08-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21579", "Period": 5, "Year": 2025, "Brand": "Redbull", "Product": "Red Bull 250ml", "Qty": 1, "Price (R)": 22.9, "Start Date": "2025-06-01", "End Date": "2025-08-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21475", "Period": 5, "Year": 2025, "Brand": "Redbull", "Product": "Red Bull 355ml", "Qty": 1, "Price (R)": 29.9, "Start Date": "2025-06-01", "End Date": "2025-08-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21476", "Period": 5, "Year": 2025, "Brand": "Redbull", "Product": "Redbull 473ml", "Qty": 1, "Price (R)": 37.9, "Start Date": "2025-06-01", "End Date": "2025-08-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21477", "Period": 6, "Year": 2025, "Brand": "Dairymaid", "Product": "Cadbury 5 Star 80ml", "Qty": 1, "Price (R)": 30, "Start Date": "2025-10-01", "End Date": "2025-12-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21478", "Period": 6, "Year": 2025, "Brand": "Ola", "Product": "Cadbury 5 Star 80ml", "Qty": 1, "Price (R)": 30, "Start Date": "2025-10-01", "End Date": "2025-12-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21479", "Period": 6, "Year": 2025, "Brand": "RFG", "Product": "Classic Pie", "Qty": 1, "Price (R)": 25.9, "Start Date": "2025-09-01", "End Date": "2025-11-30", "Comment": "EDLP"}, {"ConditionalPricingId": "21480", "Period": 6, "Year": 2025, "Brand": "Bakery", "Product": "Mini Pies", "Qty": 5, "Price (R)": 29.9, "Start Date": "2025-08-28", "End Date": "2025-11-30", "Comment": "EDLP"}, {"ConditionalPricingId": "21481", "Period": 6, "Year": 2025, "Brand": "CCBSA", "Product": "Monster 553ml", "Qty": 1, "Price (R)": 25, "Start Date": "2025-08-28", "End Date": "2025-10-15", "Comment": "EDLP"}, {"ConditionalPricingId": "21482", "Period": 6, "Year": 2025, "Brand": "CCBSA", "Product": "Power Play 250ml", "Qty": 1, "Price (R)": 16, "Start Date": "2025-08-28", "End Date": "2025-10-15", "Comment": "EDLP"}, {"ConditionalPricingId": "21483", "Period": 6, "Year": 2025, "Brand": "CCBSA", "Product": "Power Play 440ml \u2013 500ml", "Qty": 1, "Price (R)": 18, "Start Date": "2025-08-28", "End Date": "2025-10-15", "Comment": "EDLP"}, {"ConditionalPricingId": "21484", "Period": 6, "Year": 2025, "Brand": "Ola", "Product": "Magnum 90ml \u2013 100ml", "Qty": 1, "Price (R)": 33, "Start Date": "2025-07-17", "End Date": "2025-09-30", "Comment": "EDLP"}, {"ConditionalPricingId": "21485", "Period": 6, "Year": 2025, "Brand": "RDS", "Product": "Kitten Soft Toilet Paper 2ply 4s", "Qty": 1, "Price (R)": 33.9, "Start Date": "2025-07-17", "End Date": "2025-09-30", "Comment": "EDLP"}, {"ConditionalPricingId": "21486", "Period": 6, "Year": 2025, "Brand": "RDS", "Product": "Pillow Soft Facial Tissues 2ply", "Qty": 1, "Price (R)": 16.9, "Start Date": "2025-07-17", "End Date": "2025-09-30", "Comment": "EDLP"}, {"ConditionalPricingId": "21487", "Period": 6, "Year": 2025, "Brand": "Dairymaid", "Product": "King Cone Classic Vanilla 125ml", "Qty": 1, "Price (R)": 25, "Start Date": "2025-07-01", "End Date": "2025-09-30", "Comment": "EDLP"}, {"ConditionalPricingId": "21488", "Period": 6, "Year": 2025, "Brand": "Clover", "Product": "Clover Fresh Cream/ Long Life Milk 2L", "Qty": 1, "Price (R)": 39.9, "Start Date": "2025-06-01", "End Date": "2025-08-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21489", "Period": 6, "Year": 2025, "Brand": "Kellanova", "Product": "Kellogg\u2019s Granola Bars 36g", "Qty": 2, "Price (R)": 29.9, "Start Date": "2025-06-01", "End Date": "2025-08-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21490", "Period": 6, "Year": 2025, "Brand": "Kellanova", "Product": "Kellogg\u2019s Rice Krispies/ Coco Pops Bars 22g", "Qty": 2, "Price (R)": 23.9, "Start Date": "2025-06-01", "End Date": "2025-08-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21491", "Period": 6, "Year": 2025, "Brand": "Redbull", "Product": "Red Bull 250ml", "Qty": 1, "Price (R)": 22.9, "Start Date": "2025-06-01", "End Date": "2025-10-15", "Comment": "EDLP"}, {"ConditionalPricingId": "21492", "Period": 6, "Year": 2025, "Brand": "Redbull", "Product": "Red Bull 355ml", "Qty": 1, "Price (R)": 29.9, "Start Date": "2025-06-01", "End Date": "2025-10-15", "Comment": "EDLP"}, {"ConditionalPricingId": "21493", "Period": 6, "Year": 2025, "Brand": "Redbull", "Product": "Redbull 473ml", "Qty": 1, "Price (R)": 37.9, "Start Date": "2025-06-01", "End Date": "2025-10-15", "Comment": "EDLP"}, {"ConditionalPricingId": "21497", "Period": 7, "Year": 2025, "Brand": "Rhodes", "Product": "Rhodes Juice 1L", "Qty": 1, "Price (R)": 36.9, "Start Date": "2025-10-18", "End Date": "2026-01-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21499", "Period": 7, "Year": 2025, "Brand": "CCBSA", "Product": "Monster 500ml", "Qty": 1, "Price (R)": 22, "Start Date": "2025-10-16", "End Date": "2025-11-26", "Comment": "EDLP"}, {"ConditionalPricingId": "21500", "Period": 7, "Year": 2025, "Brand": "CCBSA", "Product": "Monster 553ml", "Qty": 1, "Price (R)": 28, "Start Date": "2025-10-16", "End Date": "2025-11-26", "Comment": "EDLP"}, {"ConditionalPricingId": "21501", "Period": 7, "Year": 2025, "Brand": "CCBSA", "Product": "Power Play 250ml", "Qty": 1, "Price (R)": 16, "Start Date": "2025-10-16", "End Date": "2025-11-26", "Comment": "EDLP"}, {"ConditionalPricingId": "21503", "Period": 7, "Year": 2025, "Brand": "CCBSA", "Product": "Power Play 440ml \u2013 500ml", "Qty": 1, "Price (R)": 18, "Start Date": "2025-10-16", "End Date": "2025-11-26", "Comment": "EDLP"}, {"ConditionalPricingId": "21504", "Period": 7, "Year": 2025, "Brand": "Redbull", "Product": "Red Bull 250ml", "Qty": 1, "Price (R)": 22.9, "Start Date": "2025-10-16", "End Date": "2025-12-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21507", "Period": 7, "Year": 2025, "Brand": "Redbull", "Product": "Red Bull 355ml", "Qty": 1, "Price (R)": 29.9, "Start Date": "2025-10-16", "End Date": "2025-12-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21508", "Period": 7, "Year": 2025, "Brand": "Redbull", "Product": "Redbull 473ml", "Qty": 1, "Price (R)": 37.9, "Start Date": "2025-10-16", "End Date": "2025-12-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21468", "Period": 7, "Year": 2025, "Brand": "Simba", "Product": "Lays Kettle 120g", "Qty": 1, "Price (R)": 29.9, "Start Date": "2025-10-16", "End Date": "2025-11-26", "Comment": "EDLP"}, {"ConditionalPricingId": "21471", "Period": 7, "Year": 2025, "Brand": "Dairymaid", "Product": "Cadbury 5 Star 80ml", "Qty": 1, "Price (R)": 30, "Start Date": "2025-10-01", "End Date": "2025-12-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21437", "Period": 7, "Year": 2025, "Brand": "RFG", "Product": "Classic Pie", "Qty": 1, "Price (R)": 25.9, "Start Date": "2025-09-01", "End Date": "2025-11-30", "Comment": "EDLP"}, {"ConditionalPricingId": "21463", "Period": 7, "Year": 2025, "Brand": "Bakery", "Product": "Mini Pies", "Qty": 5, "Price (R)": 29.9, "Start Date": "2025-08-28", "End Date": "2025-11-30", "Comment": "EDLP"}, {"ConditionalPricingId": "21464", "Period": 8, "Year": 2025, "Brand": "Nestle", "Product": "Nestle Giant 48g \u2013 84g", "Qty": 1, "Price (R)": 21.9, "Start Date": "2025-12-01", "End Date": "2026-02-28", "Comment": "EDLP"}, {"ConditionalPricingId": "21465", "Period": 8, "Year": 2025, "Brand": "CCBSA", "Product": "Monster 553ml", "Qty": 1, "Price (R)": 28, "Start Date": "2025-11-27", "End Date": "2026-01-21", "Comment": "EDLP"}, {"ConditionalPricingId": "21469", "Period": 8, "Year": 2025, "Brand": "CCBSA", "Product": "Power Play 440ml \u2013 500ml", "Qty": 1, "Price (R)": 19, "Start Date": "2025-11-27", "End Date": "2026-01-21", "Comment": "EDLP"}, {"ConditionalPricingId": "21474", "Period": 8, "Year": 2025, "Brand": "Rhodes", "Product": "Rhodes Juice 1L", "Qty": 1, "Price (R)": 36.9, "Start Date": "2025-10-18", "End Date": "2026-01-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21435", "Period": 8, "Year": 2025, "Brand": "Redbull", "Product": "Red Bull 250ml", "Qty": 1, "Price (R)": 22.9, "Start Date": "2025-10-16", "End Date": "2025-12-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21436", "Period": 8, "Year": 2025, "Brand": "Redbull", "Product": "Red Bull 355ml", "Qty": 1, "Price (R)": 29.9, "Start Date": "2025-10-16", "End Date": "2025-12-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21438", "Period": 8, "Year": 2025, "Brand": "Redbull", "Product": "Redbull 473ml", "Qty": 1, "Price (R)": 37.9, "Start Date": "2025-10-16", "End Date": "2025-12-31", "Comment": "EDLP"}, {"ConditionalPricingId": "21439", "Period": 8, "Year": 2025, "Brand": "Dairymaid", "Product": "Cadbury 5 Star 80ml", "Qty": 1, "Price (R)": 30, "Start Date": "2025-10-01", "End Date": "2025-12-31", "Comment": "EDLP"}];
+
+const state = {
+  data: RAW.slice(),
+  filtered: [],
+  sortKey: null,
+  sortDir: 1,
+  calYear: null,
+  calMonth: null,
+  selectedDay: null
+};
+
+const todayISO = () => {
+  const d = new Date();
+  return d.toISOString().slice(0,10);
+};
+
+function toDate(s){ return s ? new Date(s+'T00:00:00') : null; }
+
+function statusOf(row){
+  const t = todayISO();
+  if (row['Start Date'] && t < row['Start Date']) return 'upcoming';
+  if (row['End Date'] && t > row['End Date']) return 'expired';
+  return 'active';
+}
+
+function fmtR(n){
+  n = Number(n)||0;
+  return 'R ' + n.toLocaleString('en-ZA', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
+/* brand initials -> colored placeholder image via http */
+const brandColors = {};
+const palette = ['0f5fd6','0b2c6b','1aa876','f2b705','e0473c','3fb0ff','7a3ff2','e07a1f','1f9ee0','5c6b85'];
+function colorFor(brand){
+  if(!brandColors[brand]){
+    let h=0; for(const c of brand) h = (h*31 + c.charCodeAt(0))>>>0;
+    brandColors[brand] = palette[h % palette.length];
+  }
+  return brandColors[brand];
+}
+function imgFor(row){
+  const bg = colorFor(row.Brand||'X');
+  const label = `${row.Brand||''}\n${row.Product||''}`.trim();
+  return `https://placehold.co/240x160/${bg}/ffffff?text=${encodeURIComponent(label)}&font=roboto`;
+}
+
+/* ============ LIVE CLOCK ============ */
+function tickClock(){
+  const now = new Date();
+  const opts = {timeZone:'Africa/Johannesburg', hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false};
+  const dopts = {timeZone:'Africa/Johannesburg', weekday:'long', year:'numeric', month:'long', day:'numeric'};
+  document.getElementById('clockTime').textContent = now.toLocaleTimeString('en-ZA', opts);
+  document.getElementById('clockDate').textContent = now.toLocaleDateString('en-ZA', dopts);
+}
+setInterval(tickClock, 1000);
+tickClock();
+
+/* ============ FILTER POPULATION ============ */
+function uniqueSorted(arr, key){
+  return [...new Set(arr.map(d=>d[key]).filter(v=>v!==undefined && v!==null && v!==''))].sort((a,b)=> (''+a).localeCompare((''+b),undefined,{numeric:true}));
+}
+
+function populateFilters(){
+  const brandSel = document.getElementById('fBrand');
+  const yearSel = document.getElementById('fYear');
+  const periodSel = document.getElementById('fPeriod');
+  brandSel.innerHTML = '<option value="">All Brands</option>' + uniqueSorted(state.data,'Brand').map(b=>`<option value="${b}">${b}</option>`).join('');
+  yearSel.innerHTML = '<option value="">All Years</option>' + uniqueSorted(state.data,'Year').map(y=>`<option value="${y}">${y}</option>`).join('');
+  periodSel.innerHTML = '<option value="">All Periods</option>' + uniqueSorted(state.data,'Period').map(p=>`<option value="${p}">Period ${p}</option>`).join('');
+}
+
+/* ============ APPLY FILTERS ============ */
+function applyFilters(){
+  const b = document.getElementById('fBrand').value;
+  const y = document.getElementById('fYear').value;
+  const p = document.getElementById('fPeriod').value;
+  const st = document.getElementById('fStatus').value;
+  const q = document.getElementById('fSearch').value.trim().toLowerCase();
+
+  state.filtered = state.data.filter(row=>{
+    if(b && row.Brand !== b) return false;
+    if(y && String(row.Year) !== y) return false;
+    if(p && String(row.Period) !== p) return false;
+    if(st && statusOf(row) !== st) return false;
+    if(q && !(String(row.Product||'').toLowerCase().includes(q) || String(row.Brand||'').toLowerCase().includes(q))) return false;
+    if(state.selectedDay){
+      const d = state.selectedDay;
+      if(!(row['Start Date'] <= d && row['End Date'] >= d)) return false;
+    }
+    return true;
+  });
+
+  if(state.sortKey){
+    const k = state.sortKey, dir = state.sortDir;
+    state.filtered.sort((a,b)=>{
+      let av = k==='status' ? statusOf(a) : a[k];
+      let bv = k==='status' ? statusOf(b) : b[k];
+      if(typeof av === 'string') av = av.toLowerCase();
+      if(typeof bv === 'string') bv = bv.toLowerCase();
+      if(av<bv) return -1*dir;
+      if(av>bv) return 1*dir;
+      return 0;
+    });
+  }
+
+  renderKPIs();
+  renderTable();
+  renderStatus();
+  renderBrands();
+  renderCalendar();
+}
+
+/* ============ KPIs (COUNTS) ============ */
+function renderKPIs(){
+  const d = state.filtered;
+  const totalCount = d.length;
+  const activeCount = d.filter(r=>statusOf(r)==='active').length;
+  const upcomingCount = d.filter(r=>statusOf(r)==='upcoming').length;
+  const expiredCount = d.filter(r=>statusOf(r)==='expired').length;
+  const brandCount = new Set(d.map(r=>r.Brand)).size;
+  const totalValue = d.reduce((s,r)=>s+(Number(r['Price (R)'])||0)*(Number(r.Qty)||1),0);
+
+  const kpis = [
+    {num: totalCount, lbl:'Total Promotions', ico:'📋', cls:''},
+    {num: activeCount, lbl:'Active Now', ico:'🟢', cls:'ok'},
+    {num: upcomingCount, lbl:'Upcoming', ico:'⏳', cls:'gold'},
+    {num: expiredCount, lbl:'Expired', ico:'⌛', cls:''},
+    {num: brandCount, lbl:'Unique Brands', ico:'🏷️', cls:'gold'},
+    {num: fmtR(totalValue), lbl:'Total Basket Value', ico:'💰', cls:'ok'}
+  ];
+  document.getElementById('kpiRow').innerHTML = kpis.map(k=>`
+    <div class="kpi ${k.cls}">
+      <div class="ico">${k.ico}</div>
+      <div class="num">${k.num}</div>
+      <div class="lbl">${k.lbl}</div>
+    </div>`).join('');
+}
+
+/* ============ TABLE ============ */
+function renderTable(){
+  const tbody = document.getElementById('tbody');
+  document.getElementById('tableCount').textContent = state.filtered.length + ' records';
+  if(state.filtered.length===0){
+    tbody.innerHTML = `<tr><td colspan="11" style="text-align:center;color:var(--grey);padding:26px;">No promotions match these filters.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = state.filtered.map(row=>{
+    const st = statusOf(row);
+    return `<tr>
+      <td><img class="prod-img" style="cursor:pointer;" src="${imgFor(row)}" alt="${row.Brand}" loading="lazy" data-id="${row.ConditionalPricingId}" onclick="openModal('${row.ConditionalPricingId}')"></td>
+      <td>${row.ConditionalPricingId ?? ''}</td>
+      <td><strong>${row.Brand ?? ''}</strong></td>
+      <td>${row.Product ?? ''}</td>
+      <td>${row.Qty ?? ''}</td>
+      <td>${fmtR(row['Price (R)'])}</td>
+      <td>${row.Period ?? ''}</td>
+      <td>${row.Year ?? ''}</td>
+      <td>${row['Start Date'] ?? ''}</td>
+      <td>${row['End Date'] ?? ''}</td>
+      <td><span class="badge ${st}">${st}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+/* ============ STATUS BREAKDOWN ============ */
+function renderStatus(){
+  const d = state.filtered;
+  const total = d.length || 1;
+  const counts = {active:0, upcoming:0, expired:0};
+  d.forEach(r=>counts[statusOf(r)]++);
+  const colors = {active:'var(--ok)', upcoming:'var(--warn)', expired:'var(--danger)'};
+  document.getElementById('statusBody').innerHTML = Object.entries(counts).map(([k,v])=>`
+    <div class="status-row">
+      <div class="label" style="text-transform:capitalize;">${k}</div>
+      <div class="bar"><div style="width:${(v/total*100).toFixed(1)}%;background:${colors[k]};"></div></div>
+      <div class="count">${v}</div>
+    </div>`).join('');
+}
+
+function renderBrands(){
+  const d = state.filtered;
+  const counts = {};
+  d.forEach(r=>counts[r.Brand]=(counts[r.Brand]||0)+1);
+  const top = Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const max = top.length ? top[0][1] : 1;
+  document.getElementById('brandBody').innerHTML = top.map(([b,c])=>`
+    <div class="status-row">
+      <div class="label" title="${b}">${b}</div>
+      <div class="bar"><div style="width:${(c/max*100).toFixed(1)}%;background:var(--blue);"></div></div>
+      <div class="count">${c}</div>
+    </div>`).join('') || '<div style="color:var(--grey);font-size:12.5px;">No data</div>';
+}
+
+/* ============ CALENDAR (counts by day) ============ */
+const DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+function initCalendar(){
+  const now = new Date();
+  state.calYear = now.getFullYear();
+  state.calMonth = now.getMonth();
+  document.getElementById('calDow').innerHTML = DOW.map(d=>`<div class="cal-dow">${d}</div>`).join('');
+}
+
+function renderCalendar(){
+  const y = state.calYear, m = state.calMonth;
+  document.getElementById('calMonthLbl').textContent = `${MONTHS[m]} ${y}`;
+  const firstDow = new Date(y, m, 1).getDay();
+  const daysInMonth = new Date(y, m+1, 0).getDate();
+  const todayStr = todayISO();
+
+  // count promotions active on each day of this month, from the FILTERED set (so it reacts to dropdown filters, ignoring the day-select itself)
+  const base = state.data.filter(row=>{
+    const b = document.getElementById('fBrand').value;
+    const yr = document.getElementById('fYear').value;
+    const p = document.getElementById('fPeriod').value;
+    const st = document.getElementById('fStatus').value;
+    const q = document.getElementById('fSearch').value.trim().toLowerCase();
+    if(b && row.Brand !== b) return false;
+    if(yr && String(row.Year) !== yr) return false;
+    if(p && String(row.Period) !== p) return false;
+    if(st && statusOf(row) !== st) return false;
+    if(q && !(String(row.Product||'').toLowerCase().includes(q) || String(row.Brand||'').toLowerCase().includes(q))) return false;
+    return true;
+  });
+
+  const counts = {};
+  let maxCount = 0;
+  for(let d=1; d<=daysInMonth; d++){
+    const iso = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const c = base.filter(r=> r['Start Date'] <= iso && r['End Date'] >= iso).length;
+    counts[iso] = c;
+    if(c>maxCount) maxCount = c;
+  }
+
+  let cells = '';
+  for(let i=0;i<firstDow;i++) cells += `<div class="cal-cell empty"></div>`;
+  for(let d=1; d<=daysInMonth; d++){
+    const iso = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const c = counts[iso];
+    let bg = '#eef4ff';
+    if(maxCount>0 && c>0){
+      const ratio = c/maxCount;
+      if(ratio>0.66) bg = '#0f5fd6';
+      else if(ratio>0.33) bg='#5f9dfa';
+      else bg='#bcd6ff';
+    }
+    const textColor = (bg==='#0f5fd6') ? '#fff' : 'var(--navy-2)';
+    const isToday = iso===todayStr ? 'today' : '';
+    const isSel = state.selectedDay===iso ? 'selected' : '';
+    const hasClass = c>0 ? 'has' : '';
+    cells += `<div class="cal-cell ${hasClass} ${isToday} ${isSel}" data-iso="${iso}" style="background:${bg};" title="${c} promotion(s) active">
+      <div class="d" style="color:${textColor};">${d}</div>
+      ${c>0 ? `<div class="c" style="color:${textColor};">${c}</div>` : ''}
+    </div>`;
+  }
+  document.getElementById('calGrid').innerHTML = cells;
+
+  document.querySelectorAll('.cal-cell.has').forEach(cell=>{
+    cell.addEventListener('click', ()=>{
+      const iso = cell.dataset.iso;
+      state.selectedDay = state.selectedDay===iso ? null : iso;
+      applyFilters();
+    });
+  });
+}
+
+/* ============ SORT ============ */
+document.querySelectorAll('thead th').forEach(th=>{
+  th.addEventListener('click', ()=>{
+    const k = th.dataset.k;
+    if(k==='img') return;
+    if(state.sortKey===k) state.sortDir *= -1; else { state.sortKey=k; state.sortDir=1; }
+    applyFilters();
+  });
+});
+
+/* ============ CONTROLS ============ */
+['fBrand','fYear','fPeriod','fStatus'].forEach(id=>{
+  document.getElementById(id).addEventListener('change', applyFilters);
+});
+document.getElementById('fSearch').addEventListener('input', applyFilters);
+document.getElementById('btnReset').addEventListener('click', ()=>{
+  document.getElementById('fBrand').value='';
+  document.getElementById('fYear').value='';
+  document.getElementById('fPeriod').value='';
+  document.getElementById('fStatus').value='';
+  document.getElementById('fSearch').value='';
+  state.selectedDay = null;
+  applyFilters();
+});
+document.getElementById('calPrev').addEventListener('click', ()=>{
+  state.calMonth--; if(state.calMonth<0){state.calMonth=11; state.calYear--;}
+  renderCalendar();
+});
+document.getElementById('calNext').addEventListener('click', ()=>{
+  state.calMonth++; if(state.calMonth>11){state.calMonth=0; state.calYear++;}
+  renderCalendar();
+});
+document.getElementById('calToday').addEventListener('click', ()=>{
+  const n = new Date(); state.calYear=n.getFullYear(); state.calMonth=n.getMonth();
+  renderCalendar();
+});
+
+/* ============ LOAD EXCEL ============ */
+document.getElementById('btnLoad').addEventListener('click', ()=> document.getElementById('fileInput').click());
+document.getElementById('fileInput').addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev)=>{
+    try{
+      const wb = XLSX.read(ev.target.result, {type:'array', cellDates:true});
+      const sheetName = wb.SheetNames.find(n=>/promo/i.test(n)) || wb.SheetNames[0];
+      const ws = wb.Sheets[sheetName];
+      const json = XLSX.utils.sheet_to_json(ws, {defval:null});
+      const cleaned = json.filter(r => r['ConditionalPricingId'] !== null && r['ConditionalPricingId'] !== undefined)
+        .map(r=>{
+          const out = {...r};
+          ['Start Date','End Date'].forEach(k=>{
+            if(out[k] instanceof Date){
+              out[k] = out[k].toISOString().slice(0,10);
+            } else if(typeof out[k] === 'number'){
+              // excel serial date fallback
+              const d = XLSX.SSF.parse_date_code(out[k]);
+              if(d) out[k] = `${d.y}-${String(d.m).padStart(2,'0')}-${String(d.d).padStart(2,'0')}`;
+            }
+          });
+          out.ConditionalPricingId = String(out.ConditionalPricingId);
+          return out;
+        });
+      if(cleaned.length===0) throw new Error('No valid rows found');
+      state.data = cleaned;
+      state.selectedDay = null;
+      populateFilters();
+      applyFilters();
+      document.getElementById('loadStatus').textContent = `✓ Loaded ${cleaned.length} rows from ${file.name}`;
+      bubble(`New file loaded! ${cleaned.length} promotions in view. 🎉`);
+    }catch(err){
+      document.getElementById('loadStatus').textContent = `✗ Could not read file: ${err.message}`;
+      document.getElementById('loadStatus').style.color = 'var(--danger)';
+    }
+  };
+  reader.readAsArrayBuffer(file);
+});
+
+/* ============ DETAIL POPUP ============ */
+function openModal(id){
+  const row = state.data.find(r => String(r.ConditionalPricingId) === String(id));
+  if(!row) return;
+  const st = statusOf(row);
+
+  document.getElementById('mImg').src = imgFor(row);
+  document.getElementById('mImg').alt = `${row.Brand} - ${row.Product}`;
+  document.getElementById('mBrand').textContent = row.Brand || '';
+  document.getElementById('mProduct').textContent = row.Product || '';
+  document.getElementById('mId').textContent = row.ConditionalPricingId ?? '—';
+  document.getElementById('mPrice').textContent = fmtR(row['Price (R)']);
+  document.getElementById('mQty').textContent = row.Qty ?? '—';
+  document.getElementById('mPeriod').textContent = row.Period ?? '—';
+  document.getElementById('mYear').textContent = row.Year ?? '—';
+  document.getElementById('mComment').textContent = row.Comment || '—';
+  document.getElementById('mStart').textContent = row['Start Date'] || '—';
+  document.getElementById('mEnd').textContent = row['End Date'] || '—';
+
+  const badge = document.getElementById('mStatus');
+  badge.textContent = st;
+  badge.className = 'badge ' + st;
+
+  const daysEl = document.getElementById('mDays');
+  if(row['End Date']){
+    const diff = Math.ceil((toDate(row['End Date']) - new Date(todayISO()+'T00:00:00')) / 86400000);
+    if(st==='active') daysEl.textContent = diff >= 0 ? `${diff} day(s) remaining` : '';
+    else if(st==='upcoming') {
+      const start = Math.ceil((toDate(row['Start Date']) - new Date(todayISO()+'T00:00:00')) / 86400000);
+      daysEl.textContent = `starts in ${start} day(s)`;
+    } else daysEl.textContent = `ended ${Math.abs(diff)} day(s) ago`;
+  } else daysEl.textContent = '';
+
+  document.getElementById('modalOverlay').classList.add('show');
+}
+function closeModal(){
+  document.getElementById('modalOverlay').classList.remove('show');
+}
+document.getElementById('modalClose').addEventListener('click', closeModal);
+document.getElementById('modalOverlay').addEventListener('click', (e)=>{
+  if(e.target.id === 'modalOverlay') closeModal();
+});
+document.addEventListener('keydown', (e)=>{
+  if(e.key === 'Escape') closeModal();
+});
+
+/* ============ MASCOT ============ */
+const bubbleEl = document.getElementById('mascotBubble');
+const mascotLines = [
+  "Hi! I'm your Sasol promo buddy 👋",
+  "Try the calendar to spot busy days!",
+  `${RAW.length} promotions loaded and counted.`,
+  "Click any column header to sort.",
+  "Load your own Excel anytime!",
+  "Blue skies and great deals ☀️"
+];
+function bubble(text){
+  bubbleEl.textContent = text;
+  bubbleEl.classList.add('show');
+  clearTimeout(window.__bt);
+  window.__bt = setTimeout(()=>bubbleEl.classList.remove('show'), 3200);
+}
+document.getElementById('mascot').addEventListener('click', ()=>{
+  bubble(mascotLines[Math.floor(Math.random()*mascotLines.length)]);
+});
+setTimeout(()=>bubble(mascotLines[0]), 900);
+setInterval(()=>{
+  bubble(mascotLines[Math.floor(Math.random()*mascotLines.length)]);
+}, 25000);
+
+/* ============ INIT ============ */
+populateFilters();
+initCalendar();
+applyFilters();
+</script>
+</body>
+</html>
